@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asep & Rudi Mail</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🍗 Asep & Rudi Mail</h1>
+        <p>Email sementara gratis spesial!</p>
+        
+        <div class="email-box">
+            <div id="email-display">Menunggu generate...</div>
+            <div class="buttons">
+                <button onclick="copyEmail()" class="btn-copy">Salin</button>
+                <button onclick="generateCustomEmail()" class="btn-new">Ganti Nama (Asep/Rudi)</button>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            Status: <span id="status-text">Siap</span> <span id="loading-spinner" style="display:none;">🔄</span>
+        </div>
+
+        <div class="inbox-container">
+            <h3>Kotak Masuk</h3>
+            <ul id="mail-list">
+                <li class="empty-msg">Belum ada email masuk...</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div id="email-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modal-subject"></h2>
+            <div class="meta">Dari: <span id="modal-from"></span></div>
+            <div class="meta">Tanggal: <span id="modal-date"></span></div>
+            <hr>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
