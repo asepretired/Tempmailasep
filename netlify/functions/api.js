@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 exports.handler = async function(event, context) {
     const { action, login, domain, id } = event.queryStringParameters;
     
