@@ -1,40 +1,65 @@
-let user = "";
-let domain = "1secmail.com"; // Domain aktif agar email bisa masuk
+let user = localStorage.getItem('temp_user') || ""; // Cek apakah ada email lama
+let domain = localStorage.getItem('temp_domain') || "1secmail.com";
 let refreshInterval;
 
-function generateCustomEmail() {
-    const names = ["asep", "rudi", "mang_asep", "kang_rudi", "asep_ganteng"];
+// Fungsi yang dijalankan otomatis saat web dibuka
+window.onload = function() {
+    if (user) {
+        // Jika ada email lama di memori, pakai itu
+        document.getElementById('email-display').innerText = `${user}@${domain}`;
+        startChecking();
+    } else {
+        // Jika tidak ada, buat baru otomatis (Asep/Rudi)
+        generateRandomAsep();
+    }
+};
+
+function generateRandomAsep() {
+    const names = ["asep", "rudi", "kang_asep", "mang_rudi"];
     const randomName = names[Math.floor(Math.random() * names.length)];
-    const randomNum = Math.floor(Math.random() * 10000); // Angka acak agar unik
+    const randomNum = Math.floor(Math.random() * 1000);
     
-    user = `${randomName}.${randomNum}`;
-    const emailFull = `${user}@${domain}`;
+    updateEmail(randomName + randomNum, "1secmail.com");
+}
+
+function setCustomEmail() {
+    const inputName = document.getElementById('custom-name').value.trim();
+    if (inputName.length < 3) return alert("Nama kependekan!");
     
-    document.getElementById('email-display').innerText = emailFull;
+    const cleanName = inputName.toLowerCase().replace(/[^a-z0-9._]/g, "");
+    updateEmail(cleanName, document.getElementById('domain-select').value);
+}
+
+function updateEmail(newName, newDomain) {
+    user = newName;
+    domain = newDomain;
     
-    // Reset inbox
+    // SIMPAN KE MEMORI BROWSER
+    localStorage.setItem('temp_user', user);
+    localStorage.setItem('temp_domain', domain);
+    
+    document.getElementById('email-display').innerText = `${user}@${domain}`;
     document.getElementById('mail-list').innerHTML = '<li class="empty-msg">Menunggu email masuk...</li>';
     
-    // Mulai cek inbox
+    startChecking();
+}
+
+function startChecking() {
     clearInterval(refreshInterval);
-    refreshInterval = setInterval(checkInbox, 5000); // Cek tiap 5 detik
-    checkInbox(); // Cek langsung sekali
+    refreshInterval = setInterval(checkInbox, 5000);
+    checkInbox();
 }
 
 async function checkInbox() {
     if (!user) return;
-    
-    document.getElementById('loading-spinner').style.display = 'inline';
-    
     try {
-        // Kita panggil via Netlify Function untuk hindari error CORS
-        const response = await fetch(`/api?action=getMessages&login=${user}&domain=${domain}`);
+        // Pastikan URL ini sesuai dengan path Netlify Function kamu
+        const response = await fetch(`/.netlify/functions/api?action=getMessages&login=${user}&domain=${domain}`);
         const data = await response.json();
         
         const list = document.getElementById('mail-list');
-        
-        if (data.length > 0) {
-            list.innerHTML = ""; // Bersihkan pesan kosong
+        if (data && data.length > 0) {
+            list.innerHTML = "";
             data.forEach(mail => {
                 const li = document.createElement('li');
                 li.className = 'mail-item';
@@ -42,44 +67,8 @@ async function checkInbox() {
                 li.onclick = () => readMail(mail.id);
                 list.appendChild(li);
             });
-            document.getElementById('status-text').innerText = `Ada ${data.length} pesan`;
-        } else {
-            // Jangan refresh HTML kalau kosong biar gak kedip
-             document.getElementById('status-text').innerText = "Belum ada pesan baru";
         }
-    } catch (error) {
-        console.error("Gagal mengambil email", error);
-    } finally {
-        document.getElementById('loading-spinner').style.display = 'none';
-    }
-}
-
-async function readMail(id) {
-    try {
-        const response = await fetch(`/api?action=readMessage&login=${user}&domain=${domain}&id=${id}`);
-        const data = await response.json();
-        
-        document.getElementById('modal-subject').innerText = data.subject;
-        document.getElementById('modal-from').innerText = data.from;
-        document.getElementById('modal-date').innerText = data.date;
-        document.getElementById('modal-body').innerHTML = data.htmlBody || data.body; // Prioritas HTML body
-        
-        document.getElementById('email-modal').style.display = "block";
     } catch (e) {
-        alert("Gagal membuka pesan.");
+        console.log("Koneksi API terputus, mencoba lagi...");
     }
 }
-
-function closeModal() {
-    document.getElementById('email-modal').style.display = "none";
-}
-
-function copyEmail() {
-    const text = document.getElementById('email-display').innerText;
-    navigator.clipboard.writeText(text).then(() => {
-        alert("Email Asep/Rudi berhasil disalin!");
-    });
-}
-
-// Generate otomatis saat web dibuka
-window.onload = generateCustomEmail;
